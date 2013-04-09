@@ -1,8 +1,7 @@
 #ifndef TABLES_H
 #define TABLES_H
 
-typedef unsigned char uchar;
-typedef unsigned int uint;
+#include "common.h"
 
 extern const uint mul0x2[];
 extern const uint mul0x3[];

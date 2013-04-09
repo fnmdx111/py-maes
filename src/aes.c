@@ -1,13 +1,7 @@
-#include <Python.h>
+#include "../include/common.h"
 #include "../include/tables.h"
+#include "../include/inv_aes.h"
 
-#define MAES_rotate_left_m(x) (x << 8 | x >> 24)
-#define MAES_sub_word_m(x) (sbox[x >> 24] << 24        | sbox[(x >> 16) & 0xff] << 16 |\
-                            sbox[(x >> 8) & 0xff] << 8 | sbox[x & 0xff])
-#define MAES_inv_sub_word_m(x) (inv_sbox[x >> 24] << 24        | inv_sbox[(x >> 16) & 0xff] << 16 |\
-                                inv_sbox[(x >> 8) & 0xff] << 8 | inv_sbox[x & 0xff])
-#define MAES_shift_row_m(w1, w2, w3, w4) ((w1 & 0xff000000) | (w2 & 0x00ff0000) |\
-                                          (w3 & 0x0000ff00) | (w4 & 0x000000ff))
 
 static PyObject* InvalidInputLength;
 static PyObject* InvalidKeyLength;
@@ -18,30 +12,6 @@ int n_round,
 
 uint round_keys[60];
 
-void
-MAES_uchar_arr_to_uint_arr(uint dest[],
-                           uchar src[],
-                           int size)
-{
-    int i, j;
-    for (i = j = 0; j < size; ++i, j += 4) {
-        dest[i] = src[j] << 24 | src[j + 1] << 16 | src[j + 2] << 8 | src[j + 3];
-    }
-}
-
-void
-MAES_uint_arr_to_uchar_arr(uchar dest[],
-                           uint src[],
-                           int size)
-{
-    int i, j;
-    for (i = j = 0; j < size; i += 4, ++j) {
-        dest[i] = src[j] >> 24;
-        dest[i + 1] = (src[j] >> 16) & 0xff;
-        dest[i + 2] = (src[j] >> 8) & 0xff;
-        dest[i + 3] = src[j] & 0xff;
-    }
-}
 
 void
 MAES_key_schedule(uint key[])
@@ -73,16 +43,6 @@ MAES_sub_words(uint state[])
 }
 
 inline void
-MAES_inv_sub_words(uint state[])
-{
-    state[0] = MAES_inv_sub_word_m(state[0]);
-    state[1] = MAES_inv_sub_word_m(state[1]);
-    state[2] = MAES_inv_sub_word_m(state[2]);
-    state[3] = MAES_inv_sub_word_m(state[3]);
-    printf("inv_sub_words: %08x %08x %08x %08x\n", state[0], state[1], state[2], state[3]);
-}
-
-inline void
 MAES_shift_rows(uint state[])
 {
     uint temp[4] = {state[0], state[1], state[2], state[3]};
@@ -93,19 +53,6 @@ MAES_shift_rows(uint state[])
     state[3] = MAES_shift_row_m(temp[3], temp[0], temp[1], temp[2]);
 
     printf("shift_rows: %08x %08x %08x %08x\n", state[0], state[1], state[2], state[3]);
-}
-
-inline void
-MAES_inv_shift_rows(uint state[])
-{
-    uint temp[4] = {state[0], state[1], state[2], state[3]};
-
-    state[0] = MAES_shift_row_m(temp[0], temp[3], temp[2], temp[1]);
-    state[1] = MAES_shift_row_m(temp[1], temp[0], temp[3], temp[2]);
-    state[2] = MAES_shift_row_m(temp[2], temp[1], temp[0], temp[3]);
-    state[3] = MAES_shift_row_m(temp[3], temp[2], temp[1], temp[0]);
-
-    printf("inv_shift_rows: %08x %08x %08x %08x\n", state[0], state[1], state[2], state[3]);
 }
 
 void
@@ -122,22 +69,6 @@ MAES_mix_column(uint state[],
     state[i] |= (byte1 ^ mul0x2[byte2] ^ mul0x3[byte3] ^ byte4) << 16;
     state[i] |= (byte1 ^ byte2 ^ mul0x2[byte3] ^ mul0x3[byte4]) << 8;
     state[i] |= (mul0x3[byte1] ^ byte2 ^ byte3 ^ mul0x2[byte4]);
-}
-
-void
-MAES_inv_mix_column(uint state[],
-                    int i)
-{
-    uint byte1 = state[i] >> 24,
-         byte2 = (state[i] >> 16) & 0xff,
-         byte3 = (state[i] >> 8) & 0xff,
-         byte4 = state[i] & 0xff;
-
-    state[i] = 0;
-    state[i] |= (mul0xe[byte1] ^ mul0xb[byte2] ^ mul0xd[byte3] ^ mul0x9[byte4]) << 24;
-    state[i] |= (mul0x9[byte1] ^ mul0xe[byte2] ^ mul0xb[byte3] ^ mul0xd[byte4]) << 16;
-    state[i] |= (mul0xd[byte1] ^ mul0x9[byte2] ^ mul0xe[byte3] ^ mul0xb[byte4]) << 8;
-    state[i] |= (mul0xb[byte1] ^ mul0xd[byte2] ^ mul0x9[byte3] ^ mul0xe[byte4]);
 }
 
 inline void
@@ -191,33 +122,6 @@ MAES_final_round(uint state[])
     MAES_sub_words(state);
     MAES_shift_rows(state);
     MAES_add_round_keys(state, &round_keys[n_round * 4]);
-}
-
-void
-MAES_inv_init_round(uint state[])
-{
-    printf("--- first inv round ---\n");
-    MAES_add_round_keys(state, &round_keys[n_round * 4]);
-}
-
-void
-MAES_inv_round(uint state[],
-               int  round)
-{
-    printf("--- %d inv round ---\n", round);
-    MAES_inv_shift_rows(state);
-    MAES_inv_sub_words(state);
-    MAES_add_round_keys(state, &round_keys[round * 4]);
-    MAES_mix_columns(state, MAES_inv_mix_column);
-}
-
-void
-MAES_inv_final_round(uint state[])
-{
-    printf("--- final inv round ---\n");
-    MAES_inv_shift_rows(state);
-    MAES_inv_sub_words(state);
-    MAES_add_round_keys(state, &round_keys[0]);
 }
 
 static PyObject*
