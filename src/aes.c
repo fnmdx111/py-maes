@@ -100,10 +100,10 @@ MAES_inv_shift_rows(uint state[])
 {
     uint temp[4] = {state[0], state[1], state[2], state[3]};
 
-    state[0] = MAES_shift_row_m(temp[0], temp[1], temp[2], temp[3]);
-    state[1] = MAES_shift_row_m(temp[3], temp[0], temp[1], temp[2]);
-    state[2] = MAES_shift_row_m(temp[2], temp[3], temp[0], temp[1]);
-    state[3] = MAES_shift_row_m(temp[1], temp[2], temp[3], temp[0]);
+    state[0] = MAES_shift_row_m(temp[0], temp[3], temp[2], temp[1]);
+    state[1] = MAES_shift_row_m(temp[1], temp[0], temp[3], temp[2]);
+    state[2] = MAES_shift_row_m(temp[2], temp[1], temp[0], temp[3]);
+    state[3] = MAES_shift_row_m(temp[3], temp[2], temp[1], temp[0]);
 
     printf("inv_shift_rows: %08x %08x %08x %08x\n", state[0], state[1], state[2], state[3]);
 }
