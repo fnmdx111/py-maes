@@ -9,8 +9,6 @@ MAES是为32bit环境下编写的，所以请用32位的python。
 
 原则上来讲，64bit或16bit下，程序会不能得出正常结果，因为只有32位下一个int为32位。
 
-todo: replace `unsigned int` with `uint32_t` for the sake of portability
-
 本库在win7 64位，mingw32 4.7.1，python2.7 32位下测试通过。
 
 
@@ -26,6 +24,13 @@ todo: replace `unsigned int` with `uint32_t` for the sake of portability
 如果key关键字被留空，则使用缓存起来的`round_keys`，可以避免每次加密都要重新计算轮密钥。
 
 
+TODO
+----
+
+* replace `unsigned int` with `uint32_t` for the sake of portability
+* remove all `printf` for RELEASE
+
+
 另外
 ----
 
@@ -34,4 +39,5 @@ todo: replace `unsigned int` with `uint32_t` for the sake of portability
 email: chsc4698@gmail.com
 
 ps 实在是想不出来一个好玩点的递归名字
+
 
