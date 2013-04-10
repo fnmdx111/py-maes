@@ -18,7 +18,7 @@ MAES_add_round_keys(uint state[],
     state[3] ^= keys[3];
 }
 
-void
+inline void
 MAES_uchar_arr_to_uint_arr(uint dest[],
                            uchar src[],
                            int size)
@@ -29,7 +29,7 @@ MAES_uchar_arr_to_uint_arr(uint dest[],
     }
 }
 
-void
+inline void
 MAES_uint_arr_to_uchar_arr(uchar dest[],
                            uint src[],
                            int size)

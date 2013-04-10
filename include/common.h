@@ -9,6 +9,10 @@
 #define DEVNULL "nul"
 #endif
 
+#if defined(_MSC_VER)
+#define uint32_t unsigned __int32
+#endif
+
 typedef unsigned char uchar;
 typedef uint32_t uint;
 
@@ -25,10 +29,10 @@ extern int n_block;
 extern int n_key;
 extern uint round_keys[];
 
-void MAES_add_round_keys(uint state[], uint keys[]);
-void MAES_uchar_arr_to_uint_arr(uint dest[], uchar src[], int size);
-void MAES_uint_arr_to_uchar_arr(uchar dest[], uint src[], int size);
+inline void MAES_add_round_keys(uint state[], uint keys[]);
+inline void MAES_uchar_arr_to_uint_arr(uint dest[], uchar src[], int size);
+inline void MAES_uint_arr_to_uchar_arr(uchar dest[], uint src[], int size);
 void MAES_key_schedule(uint key[]);
-void MAES_mix_columns(uint state[], void (*mix_column)(uint[], int));
+inline void MAES_mix_columns(uint state[], void (*mix_column)(uint[], int));
 
 #endif
