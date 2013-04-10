@@ -8,6 +8,7 @@ setup(name='maes',
                              sources=['src/common.c',
                                       'src/tables.c', 
                                       'src/aes.c',
-                                      'src/inv_aes.c'],
+                                      'src/inv_aes.c',
+                                      'src/maes.c'],
                              include_dirs=['include'])])
 

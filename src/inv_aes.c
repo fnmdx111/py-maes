@@ -1,6 +1,6 @@
-#include "../include/inv_aes.h"
-#include "../include/aes.h"
-#include "../include/tables.h"
+#include <inv_aes.h>
+#include <aes.h>
+#include <tables.h>
 
 
 inline void
@@ -10,7 +10,6 @@ MAES_inv_sub_words(uint state[])
     state[1] = MAES_inv_sub_word_m(state[1]);
     state[2] = MAES_inv_sub_word_m(state[2]);
     state[3] = MAES_inv_sub_word_m(state[3]);
-    printf("inv_sub_words: %08x %08x %08x %08x\n", state[0], state[1], state[2], state[3]);
 }
 
 inline void
@@ -22,11 +21,9 @@ MAES_inv_shift_rows(uint state[])
     state[1] = MAES_shift_row_m(temp[1], temp[0], temp[3], temp[2]);
     state[2] = MAES_shift_row_m(temp[2], temp[1], temp[0], temp[3]);
     state[3] = MAES_shift_row_m(temp[3], temp[2], temp[1], temp[0]);
-
-    printf("inv_shift_rows: %08x %08x %08x %08x\n", state[0], state[1], state[2], state[3]);
 }
 
-void
+inline void
 MAES_inv_mix_column(uint state[],
                     int i)
 {
@@ -42,28 +39,25 @@ MAES_inv_mix_column(uint state[],
     state[i] |= (mul0xb[byte1] ^ mul0xd[byte2] ^ mul0x9[byte3] ^ mul0xe[byte4]);
 }
 
-void
+inline void
 MAES_inv_init_round(uint state[])
 {
-    printf("--- first inv round ---\n");
     MAES_add_round_keys(state, &round_keys[n_round * 4]);
 }
 
-void
+inline void
 MAES_inv_round(uint state[],
                int  round)
 {
-    printf("--- %d inv round ---\n", round);
     MAES_inv_shift_rows(state);
     MAES_inv_sub_words(state);
     MAES_add_round_keys(state, &round_keys[round * 4]);
     MAES_mix_columns(state, MAES_inv_mix_column);
 }
 
-void
+inline void
 MAES_inv_final_round(uint state[])
 {
-    printf("--- final inv round ---\n");
     MAES_inv_shift_rows(state);
     MAES_inv_sub_words(state);
     MAES_add_round_keys(state, &round_keys[0]);

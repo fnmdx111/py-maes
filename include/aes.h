@@ -3,12 +3,10 @@
 
 #include "common.h"
 
-extern int n_round;
-extern int n_block;
-extern int n_key;
-extern uint round_keys[];
-
-void MAES_add_round_keys(uint state[], uint keys[]);
-void MAES_mix_columns(uint state[], void (*mix_column)(uint[], int));
+void MAES_init_round(uint state[]);
+void MAES_round(uint state[], int round);
+void MAES_final_round(uint state[]);
+void MAES_mix_column(uint state[], int i);
 
 #endif
+

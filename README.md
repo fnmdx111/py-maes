@@ -9,6 +9,8 @@ MAES是为32bit环境下编写的，所以请用32位的python。
 
 原则上来讲，64bit或16bit下，程序会不能得出正常结果，因为只有32位下一个int为32位。
 
+update: `unsigned int`改为了`uint32_t`，现在应该是平台无关的了。
+
 本库在win7 64位，mingw32 4.7.1，python2.7 32位下测试通过。
 
 
@@ -39,12 +41,19 @@ MAES是为32bit环境下编写的，所以请用32位的python。
 
 如果key关键字被留空，则使用缓存起来的`round_keys`，可以避免每次加密都要重新计算轮密钥。
 
+e.g.
+
+    >>> import maes
+    >>> maes.encrypt('\x00\x01\x00\x01\x01\xa1\x98\xaf\xda\x78\x17\x34\x86\x15\x35\x66', '\x00\x01\x20\x01\x71\x01\x98\xae\xda\x79\x17\x14\x60\x15\x35\x94')
+    'l\xddYk\x8fVB\xcb\xd2;G\x98\x1aeB*'
+    >>> maes.decrypt('l\xddYk\x8fVB\xcb\xd2;G\x98\x1aeB*') # 使用了encrypt里提供的密钥
+    '\x00\x01\x00\x01\x01\xa1\x98\xaf\xdax\x174\x86\x155f'
+
 
 TODO
 ----
 
-* replace `unsigned int` with `uint32_t` for the sake of portability
-* remove all `printf` for RELEASE
+* iterartor for large file encryption
 
 
 另外
