@@ -23,7 +23,7 @@ MAES是为32bit环境下编写的，所以请用32位的python。
 
     python setup.py build --compiler=mingw32
 
-如果出现`未识别的参数-mno-cygwin`，那么请打`cygwinccompiler.patch`（这个问题出现于高版本的mingw32上）
+如果出现`未识别的参数-mno-cygwin`，那么请打`cygwinccompiler.patch`（这个问题出现于高版本的mingw32上）。
 
 编译后会在`build/lib.win32-2.7`下出现`maes.pyd`文件，复制到你的项目下就可以了。
 
