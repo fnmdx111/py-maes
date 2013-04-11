@@ -23,16 +23,41 @@ typedef uint32_t uint;
                                 inv_sbox[(x >> 8) & 0xff] << 8 | inv_sbox[x & 0xff])
 #define MAES_shift_row_m(w1, w2, w3, w4) ((w1 & 0xff000000) | (w2 & 0x00ff0000) |\
                                           (w3 & 0x0000ff00) | (w4 & 0x000000ff))
+#define MAES_add_round_keys_m(state, keys, start) {\
+	state[0] ^= keys[start];\
+	state[1] ^= keys[start + 1];\
+	state[2] ^= keys[start + 2];\
+	state[3] ^= keys[start + 3];\
+}
+#define MAES_mix_columns_m(state, f) {\
+	f(state, 0);\
+	f(state, 1);\
+	f(state, 2);\
+	f(state, 3);\
+}
+
+#define MAES_char_arr_to_uint_arr_m(dest, src_, size) {\
+    int i, j;\
+    uchar* src = (uchar*) src_;\
+    for (i = j = 0; j < size; ++i, j += 4) {\
+        dest[i] = src[j] << 24 | src[j + 1] << 16 | src[j + 2] << 8 | src[j + 3];\
+    }\
+}
+#define MAES_uint_arr_to_uchar_arr_m(dest, src, size) {\
+    int i, j;\
+    for (i = j = 0; j < size; i += 4, ++j) {\
+        dest[i] = src[j] >> 24;\
+        dest[i + 1] = (src[j] >> 16) & 0xff;\
+        dest[i + 2] = (src[j] >> 8) & 0xff;\
+        dest[i + 3] = src[j] & 0xff;\
+    }\
+}
 
 extern int n_round;
 extern int n_block;
 extern int n_key;
 extern uint round_keys[];
 
-inline void MAES_add_round_keys(uint state[], uint keys[]);
-inline void MAES_uchar_arr_to_uint_arr(uint dest[], uchar src[], int size);
-inline void MAES_uint_arr_to_uchar_arr(uchar dest[], uint src[], int size);
 void MAES_key_schedule(uint key[]);
-inline void MAES_mix_columns(uint state[], void (*mix_column)(uint[], int));
 
 #endif

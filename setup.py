@@ -7,8 +7,6 @@ setup(name='maes',
       ext_modules=[Extension('maes',
                              sources=['src/common.c',
                                       'src/tables.c', 
-                                      'src/aes.c',
-                                      'src/inv_aes.c',
                                       'src/maes.c'],
                              include_dirs=['include'])])
 

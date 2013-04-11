@@ -8,41 +8,6 @@ int n_round,
 uint round_keys[60];
 
 
-inline void
-MAES_add_round_keys(uint state[],
-                    uint keys[])
-{
-    state[0] ^= keys[0];
-    state[1] ^= keys[1];
-    state[2] ^= keys[2];
-    state[3] ^= keys[3];
-}
-
-inline void
-MAES_uchar_arr_to_uint_arr(uint dest[],
-                           uchar src[],
-                           int size)
-{
-    int i, j;
-    for (i = j = 0; j < size; ++i, j += 4) {
-        dest[i] = src[j] << 24 | src[j + 1] << 16 | src[j + 2] << 8 | src[j + 3];
-    }
-}
-
-inline void
-MAES_uint_arr_to_uchar_arr(uchar dest[],
-                           uint src[],
-                           int size)
-{
-    int i, j;
-    for (i = j = 0; j < size; i += 4, ++j) {
-        dest[i] = src[j] >> 24;
-        dest[i + 1] = (src[j] >> 16) & 0xff;
-        dest[i + 2] = (src[j] >> 8) & 0xff;
-        dest[i + 3] = src[j] & 0xff;
-    }
-}
-
 void
 MAES_key_schedule(uint key[])
 {
@@ -62,15 +27,5 @@ MAES_key_schedule(uint key[])
     }
 }
 
-
-inline void
-MAES_mix_columns(uint state[],
-                 void (*mix_column)(uint[], int))
-{
-    mix_column(state, 0);
-    mix_column(state, 1);
-    mix_column(state, 2);
-    mix_column(state, 3);
-}
 
 

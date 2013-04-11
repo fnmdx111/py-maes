@@ -1,6 +1,7 @@
 #include <common.h>
 #include <aes.h>
 #include <inv_aes.h>
+#include <tables.h>
 
 static PyObject* InvalidInputLength;
 static PyObject* InvalidKeyLength;
@@ -11,13 +12,13 @@ MAES_test_mix_columns(PyObject* self, PyObject* args)
 {
     uint state[] = {0xdbf2d42d, 0x130ad426, 0x5322d431, 0x455cd54c};
     printf("before:  %x %x %x %x\n", state[0], state[1], state[2], state[3]);
-    MAES_mix_column(state, 0);
+    MAES_mix_column_m(state, 0);
     printf("1st col: %x %x %x %x\n", state[0], state[1], state[2], state[3]);
-    MAES_mix_column(state, 1);
+    MAES_mix_column_m(state, 1);
     printf("2nd col: %x %x %x %x\n", state[0], state[1], state[2], state[3]);
-    MAES_mix_column(state, 2);
+    MAES_mix_column_m(state, 2);
     printf("3rd col: %x %x %x %x\n", state[0], state[1], state[2], state[3]);
-    MAES_mix_column(state, 3);
+    MAES_mix_column_m(state, 3);
     printf("4th col: %x %x %x %x\n", state[0], state[1], state[2], state[3]);
 
     return Py_BuildValue("IIII", state[0], state[1], state[2], state[3]);
@@ -61,25 +62,25 @@ MAES_encrypt(PyObject* self,
         n_key = key_size / 4;
         n_round = 10 + n_key - 4;
 
-        MAES_uchar_arr_to_uint_arr(key_raw,
-                                   (uchar*) key,
-                                   key_size);
+        MAES_char_arr_to_uint_arr_m(key_raw,
+                                    key,
+                                    key_size);
         MAES_key_schedule(key_raw);
     }
 
-    MAES_uchar_arr_to_uint_arr(state,
-                               (uchar*) plaintext,
-                               plaintext_size);
+    MAES_char_arr_to_uint_arr_m(state,
+                                plaintext,
+                                plaintext_size);
 
-    MAES_init_round(state);
+    MAES_init_round_m(state);
     for (i = 1; i < n_round; ++i) {
-        MAES_round(state, i);
+        MAES_round_m(state, i);
     }
-    MAES_final_round(state);
+    MAES_final_round_m(state);
 
-    MAES_uint_arr_to_uchar_arr(cipher,
-                               state,
-                               4);
+    MAES_uint_arr_to_uchar_arr_m(cipher,
+                                 state,
+                                 4);
 
 	return Py_BuildValue("s#",
                          cipher,
@@ -125,25 +126,25 @@ MAES_decrypt(PyObject* self,
         n_key = key_size / 4;
         n_round = 10 + n_key - 4;
 
-        MAES_uchar_arr_to_uint_arr(key_raw,
-                                   (uchar*) key,
-                                   key_size);
+        MAES_char_arr_to_uint_arr_m(key_raw,
+                                    key,
+                                    key_size);
         MAES_key_schedule(key_raw);
     }
 
-    MAES_uchar_arr_to_uint_arr(state,
-                               (uchar*) cipher,
-                               cipher_size);
+    MAES_char_arr_to_uint_arr_m(state,
+                                cipher,
+                                cipher_size);
 
-    MAES_inv_init_round(state);
+    MAES_inv_init_round_m(state);
     for (i = n_round - 1; i > 0; --i) {
-        MAES_inv_round(state, i);
+        MAES_inv_round_m(state, i);
     }
-    MAES_inv_final_round(state);
+    MAES_inv_final_round_m(state);
 
-    MAES_uint_arr_to_uchar_arr(plaintext,
-                               state,
-                               4);
+    MAES_uint_arr_to_uchar_arr_m(plaintext,
+                                 state,
+                                 4);
 
 	return Py_BuildValue("s#",
                          plaintext,
