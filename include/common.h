@@ -30,10 +30,10 @@ typedef uint32_t uint;
 	state[3] ^= keys[start + 3];\
 }
 #define MAES_mix_columns_m(state, f) {\
-	f(state, 0);\
-	f(state, 1);\
-	f(state, 2);\
-	f(state, 3);\
+	f(state, 0)\
+	f(state, 1)\
+	f(state, 2)\
+	f(state, 3)\
 }
 
 #define MAES_char_arr_to_uint_arr_m(dest, src_, size) {\

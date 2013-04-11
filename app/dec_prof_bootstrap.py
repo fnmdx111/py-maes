@@ -1,6 +1,6 @@
 import cProfile
 import pstats
-from example import key
+from enc_prof_bootstrap import key
 from main import decrypt_fp
 
 

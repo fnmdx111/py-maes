@@ -6,10 +6,51 @@
 static PyObject* InvalidInputLength;
 static PyObject* InvalidKeyLength;
 
+#define MAES_aes_m(state) \
+    MAES_init_round_m(state)\
+    for (i = 1; i < n_round; ++i) {\
+        MAES_round_m(state, i)\
+    }\
+    MAES_final_round_m(state)
+
+#define MAES_inv_aes_m(state) \
+    MAES_inv_init_round_m(state)\
+    for (i = n_round - 1; i > 0; --i) {\
+        MAES_inv_round_m(state, i)\
+    }\
+    MAES_inv_final_round_m(state)
+
+#define VALIDATE_LEN(param) \
+    ok = PyArg_ParseTuple(args,\
+                          "s#|s#",\
+                          &param, &param ## _size,\
+                          &key,   &key_size);\
+	if (!ok) {\
+		return NULL;\
+	}\
+    if (param ## _size % 16 != 0) {\
+        PyErr_SetString(InvalidInputLength, "Invalid " #param " length");\
+        return NULL;\
+    }\
+    if (key_size == 0  || key_size == 16 ||\
+        key_size == 24 || key_size == 32) {\
+    } else {\
+        PyErr_SetString(InvalidKeyLength, "Invalid key length");\
+        return NULL;\
+    }
+
+#define PREPARE_KEYS \
+	if (key_size) {\
+        n_key = key_size / 4;\
+        n_round = 10 + n_key - 4;\
+        MAES_char_arr_to_uint_arr_m(key_raw, key, key_size)\
+        MAES_key_schedule(key_raw);\
+    }
 
 static PyObject*
 MAES_test_mix_columns(PyObject* self, PyObject* args)
 {
+    uint temp[4];
     uint state[] = {0xdbf2d42d, 0x130ad426, 0x5322d431, 0x455cd54c};
     printf("before:  %x %x %x %x\n", state[0], state[1], state[2], state[3]);
     MAES_mix_column_m(state, 0);
@@ -39,48 +80,16 @@ MAES_encrypt(PyObject* self,
          key_raw[] = {0, 0, 0, 0, 0, 0, 0, 0};
     uchar cipher[16];
 
-	ok = PyArg_ParseTuple(args,
-                          "s#|s#",
-                          &plaintext, &plaintext_size,
-                          &key,       &key_size);
-	if (!ok) {
-		return NULL;
-	}
+    uint temp[4];
 
-    if (plaintext_size != 16) {
-        PyErr_SetString(InvalidInputLength, "Invalid plaintext length");
-        return NULL;
-    }
-    if (key_size == 0  || key_size == 16 ||
-        key_size == 24 || key_size == 32) {
-    } else {
-        PyErr_SetString(InvalidKeyLength, "Invalid key length");
-        return NULL;
-    }
+    VALIDATE_LEN(plaintext)
+    PREPARE_KEYS
 
-	if (key_size) {
-        n_key = key_size / 4;
-        n_round = 10 + n_key - 4;
+    MAES_char_arr_to_uint_arr_m(state, plaintext, plaintext_size)
 
-        MAES_char_arr_to_uint_arr_m(key_raw,
-                                    key,
-                                    key_size);
-        MAES_key_schedule(key_raw);
-    }
+    MAES_aes_m(state)
 
-    MAES_char_arr_to_uint_arr_m(state,
-                                plaintext,
-                                plaintext_size);
-
-    MAES_init_round_m(state);
-    for (i = 1; i < n_round; ++i) {
-        MAES_round_m(state, i);
-    }
-    MAES_final_round_m(state);
-
-    MAES_uint_arr_to_uchar_arr_m(cipher,
-                                 state,
-                                 4);
+    MAES_uint_arr_to_uchar_arr_m(cipher, state, 4) 
 
 	return Py_BuildValue("s#",
                          cipher,
@@ -103,48 +112,16 @@ MAES_decrypt(PyObject* self,
          key_raw[] = {0, 0, 0, 0, 0, 0, 0, 0};
     uchar plaintext[16];
 
-	ok = PyArg_ParseTuple(args,
-                          "s#|s#",
-                          &cipher, &cipher_size,
-                          &key,    &key_size);
-	if (!ok) {
-		return NULL;
-	}
+    uint temp[4];
 
-    if (cipher_size != 16) {
-        PyErr_SetString(InvalidInputLength, "Invalid cipher length");
-        return NULL;
-    }
-    if (key_size == 0  || key_size == 16 ||
-        key_size == 24 || key_size == 32) {
-    } else {
-        PyErr_SetString(InvalidKeyLength, "Invalid key length");
-        return NULL;
-    }
+    VALIDATE_LEN(cipher)
+    PREPARE_KEYS
 
-	if (key_size) {
-        n_key = key_size / 4;
-        n_round = 10 + n_key - 4;
+    MAES_char_arr_to_uint_arr_m(state, cipher, cipher_size)
 
-        MAES_char_arr_to_uint_arr_m(key_raw,
-                                    key,
-                                    key_size);
-        MAES_key_schedule(key_raw);
-    }
+    MAES_inv_aes_m(state)
 
-    MAES_char_arr_to_uint_arr_m(state,
-                                cipher,
-                                cipher_size);
-
-    MAES_inv_init_round_m(state);
-    for (i = n_round - 1; i > 0; --i) {
-        MAES_inv_round_m(state, i);
-    }
-    MAES_inv_final_round_m(state);
-
-    MAES_uint_arr_to_uchar_arr_m(plaintext,
-                                 state,
-                                 4);
+    MAES_uint_arr_to_uchar_arr_m(plaintext, state, 4)
 
 	return Py_BuildValue("s#",
                          plaintext,
