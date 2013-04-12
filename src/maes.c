@@ -67,7 +67,7 @@ static PyObject* InvalidKeyLength;
         return NULL;\
     }
 
-#define INIT_VARS int ok; uint temp[4], state[4], key_raw[8];
+#define INIT_VARS int ok; uint temp[16], state[16], key_raw[8];
 #define INIT_DATA_VARS(keyword)\
     int keyword ## _size, key_size = 0;\
     char *keyword, *key = NULL;\
@@ -87,18 +87,25 @@ static PyObject*
 MAES_test_mix_columns(PyObject* self, PyObject* args)
 {
     uint temp[4];
-    uint state[] = {0xdbf2d42d, 0x130ad426, 0x5322d431, 0x455cd54c};
+    uint state[] = {0xdb, 0xf2, 0xd4, 0x2d,
+                    0x13, 0x0a, 0xd4, 0x26,
+                    0x53, 0x22, 0xd4, 0x31,
+                    0x45, 0x5c, 0xd5, 0x4c};
     printf("before:  %x %x %x %x\n", state[0], state[1], state[2], state[3]);
-    MAES_mix_column_m(state, 0);
+    MAES_mix_column_m(state, 0)
     printf("1st col: %x %x %x %x\n", state[0], state[1], state[2], state[3]);
-    MAES_mix_column_m(state, 1);
-    printf("2nd col: %x %x %x %x\n", state[0], state[1], state[2], state[3]);
-    MAES_mix_column_m(state, 2);
-    printf("3rd col: %x %x %x %x\n", state[0], state[1], state[2], state[3]);
-    MAES_mix_column_m(state, 3);
-    printf("4th col: %x %x %x %x\n", state[0], state[1], state[2], state[3]);
+    MAES_mix_column_m(state, 4)
+    printf("2nd col: %x %x %x %x\n", state[4], state[5], state[6], state[7]);
+    MAES_mix_column_m(state, 8)
+    printf("3rd col: %x %x %x %x\n", state[8], state[9], state[10], state[11]);
+    MAES_mix_column_m(state, 12)
+    printf("4th col: %x %x %x %x\n", state[12], state[13], state[14], state[15]);
 
-    return Py_BuildValue("IIII", state[0], state[1], state[2], state[3]);
+    return Py_BuildValue("IIIIIIIIIIIIIIII",
+                         state[0], state[1], state[2], state[3],
+                         state[4], state[5], state[6], state[7],
+                         state[8], state[9], state[10], state[11],
+                         state[12], state[13], state[14], state[15]);
 }
 
 static PyObject*
@@ -118,11 +125,11 @@ MAES_encrypt(PyObject* self,
     PREPARE_KEYS
 
     uchar_plaintext = (uchar*) plaintext;
-    MAES_uchar_16_to_uint_4_m(state, uchar_plaintext, 0)
+    MAES_copy_16_m(state, uchar_plaintext, 0)
 
     MAES_aes_m(state)
 
-    MAES_uint_4_to_uchar_16_m(cipher, state, 0) 
+    MAES_copy_16_m(cipher, state, 0)
 
 	return Py_BuildValue("s#",
                          cipher,
@@ -197,11 +204,11 @@ MAES_decrypt(PyObject* self,
     PREPARE_KEYS
 
     uchar_cipher = (uchar*) cipher;
-    MAES_uchar_16_to_uint_4_m(state, uchar_cipher, 0)
+    MAES_copy_16_m(state, uchar_cipher, 0)
 
     MAES_inv_aes_m(state)
 
-    MAES_uint_4_to_uchar_16_m(plaintext, state, 0)
+    MAES_copy_16_m(plaintext, state, 0)
 
 	return Py_BuildValue("s#",
                          plaintext,
@@ -213,7 +220,7 @@ MAES_cached_round_keys(PyObject* self,
                        PyObject* args)
 {
     PyObject* ret; 
-    int i, n = n_block * (n_round + 1);
+    int i, n = n_block * (n_round + 1) * 4;
 
     ret = PyTuple_New(n);
     if (!ret) {
