@@ -17,15 +17,11 @@ update: `unsigned int`改为了`uint32_t`，现在应该是平台无关的了。
 编译
 ----
 
-使用如下命令
-
-    python setup.py build
-
-如果使用mingw32，那么命令为
+不知道为什么在vs下编译会报语法错误（目前只试了vs2013express）。所以请使用如下命令
 
     python setup.py build --compiler=mingw32
 
-如果出现`未识别的参数-mno-cygwin`，那么请打`cygwinccompiler.patch`（这个问题出现于高版本的mingw32上）。
+如果出现`未识别的参数-mno-cygwin`，那么请打`cygwinccompiler.patch`（这个问题出现于高版本的mingw32上）。其中`cygwinccompiler.py`位于`PYTHON_HOME/Lib/distutils/`中。
 
 编译后会在`build/lib.win32-2.7`下出现`maes.pyd`文件，复制到你的项目下就可以了。
 
