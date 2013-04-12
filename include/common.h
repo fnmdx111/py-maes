@@ -36,16 +36,37 @@ typedef uint32_t uint;
 	f(state, 3)\
 }
 
-#define MAES_char_arr_to_uint_arr_m(dest, src_, size) {\
+#define MAES_char_arr_to_uint_arr_m(dest, src_, size, offset) {\
     int i, j;\
     uchar* src = (uchar*) src_;\
-    for (i = j = 0; j < size; ++i, j += 4) {\
+    for (i = 0, j = offset; j < size; ++i, j += 4) {\
         dest[i] = src[j] << 24 | src[j + 1] << 16 | src[j + 2] << 8 | src[j + 3];\
     }\
 }
-#define MAES_uint_arr_to_uchar_arr_m(dest, src, size) {\
+
+#define MAES_uchar_16_to_uint_4_m(dest, src, offset) \
+    dest[0] = src[offset] << 24 | src[offset + 1] << 16 | src[offset + 2] << 8 | src[offset + 3];\
+    offset += 4;\
+    dest[1] = src[offset] << 24 | src[offset + 1] << 16 | src[offset + 2] << 8 | src[offset + 3];\
+    offset += 4;\
+    dest[2] = src[offset] << 24 | src[offset + 1] << 16 | src[offset + 2] << 8 | src[offset + 3];\
+    offset += 4;\
+    dest[3] = src[offset] << 24 | src[offset + 1] << 16 | src[offset + 2] << 8 | src[offset + 3];\
+    offset += 4;
+
+#define MAES_uint_4_to_uchar_16_m(dest, src, offset) \
+    dest[offset] = src[0] >> 24; dest[offset + 1] = (src[0] >> 16) & 0xff; dest[offset + 2] = (src[0] >> 8) & 0xff; dest[offset + 3] = src[0] & 0xff;\
+    offset += 4;\
+    dest[offset] = src[1] >> 24; dest[offset + 1] = (src[1] >> 16) & 0xff; dest[offset + 2] = (src[1] >> 8) & 0xff; dest[offset + 3] = src[1] & 0xff;\
+    offset += 4;\
+    dest[offset] = src[2] >> 24; dest[offset + 1] = (src[2] >> 16) & 0xff; dest[offset + 2] = (src[2] >> 8) & 0xff; dest[offset + 3] = src[2] & 0xff;\
+    offset += 4;\
+    dest[offset] = src[3] >> 24; dest[offset + 1] = (src[3] >> 16) & 0xff; dest[offset + 2] = (src[3] >> 8) & 0xff; dest[offset + 3] = src[3] & 0xff;\
+    offset += 4;
+
+#define MAES_uint_arr_to_uchar_arr_m(dest, src, size, offset) {\
     int i, j;\
-    for (i = j = 0; j < size; i += 4, ++j) {\
+    for (i = offset, j = 0; j < size; i += 4, ++j) {\
         dest[i] = src[j] >> 24;\
         dest[i + 1] = (src[j] >> 16) & 0xff;\
         dest[i + 2] = (src[j] >> 8) & 0xff;\
