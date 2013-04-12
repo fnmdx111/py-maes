@@ -8,11 +8,10 @@
     temp[1] = (state[i] >> 16) & 0xff,\
     temp[2] = (state[i] >> 8) & 0xff,\
     temp[3] = state[i] & 0xff;\
-    state[i] = 0;\
-    state[i] |= (mul0x2[temp[0]] ^ mul0x3[temp[1]] ^ temp[2] ^ temp[3]) << 24;\
-    state[i] |= (temp[0] ^ mul0x2[temp[1]] ^ mul0x3[temp[2]] ^ temp[3]) << 16;\
-    state[i] |= (temp[0] ^ temp[1] ^ mul0x2[temp[2]] ^ mul0x3[temp[3]]) << 8;\
-    state[i] |= (mul0x3[temp[0]] ^ temp[1] ^ temp[2] ^ mul0x2[temp[3]]);
+    state[i] = ((mul0x2[temp[0]] ^ mul0x3[temp[1]] ^ temp[2] ^ temp[3]) << 24) |\
+               ((temp[0] ^ mul0x2[temp[1]] ^ mul0x3[temp[2]] ^ temp[3]) << 16) |\
+               ((temp[0] ^ temp[1] ^ mul0x2[temp[2]] ^ mul0x3[temp[3]]) << 8)  |\
+               (mul0x3[temp[0]] ^ temp[1] ^ temp[2] ^ mul0x2[temp[3]]);
 
 
 #define MAES_sub_words_m(state) \

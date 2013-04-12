@@ -55,12 +55,13 @@ TODO
 ----
 
 * iterartor for large file encryption, e.g. CFB mode
+* reduce bit operations, e.g. change 1 uint to an uint array with 4 uint(thus expand 1 uchar to 1 uint)
 
 
 性能
 ----
 
-以下为在ECB模式下，加密50MB的QQ2013Beta1.exe的profiler结果。padding模式为PKCS#7。
+以下为在ECB模式下，使用128bit密钥加密50MB的QQ2013Beta1.exe的profiler结果。padding模式为PKCS#7。
 
     Thu Apr 11 10:05:00 2013    encrypt_prof_ix
 
@@ -114,6 +115,8 @@ TODO
 
 Changelog
 ---------
+
+* 2013/4/12 消除了所有可以去掉的循环，速度略有提升
 
 * 2013/4/11 所有inline函数转换成了宏，在50MB文件加密中，速度提高了大约1秒。
 

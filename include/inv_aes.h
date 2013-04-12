@@ -7,11 +7,10 @@
     temp[1] = (state[i] >> 16) & 0xff,\
     temp[2] = (state[i] >> 8) & 0xff,\
     temp[3] = state[i] & 0xff,\
-    state[i] = 0;\
-    state[i] |= (mul0xe[temp[0]] ^ mul0xb[temp[1]] ^ mul0xd[temp[2]] ^ mul0x9[temp[3]]) << 24;\
-    state[i] |= (mul0x9[temp[0]] ^ mul0xe[temp[1]] ^ mul0xb[temp[2]] ^ mul0xd[temp[3]]) << 16;\
-    state[i] |= (mul0xd[temp[0]] ^ mul0x9[temp[1]] ^ mul0xe[temp[2]] ^ mul0xb[temp[3]]) << 8;\
-    state[i] |= (mul0xb[temp[0]] ^ mul0xd[temp[1]] ^ mul0x9[temp[2]] ^ mul0xe[temp[3]]);\
+    state[i] = ((mul0xe[temp[0]] ^ mul0xb[temp[1]] ^ mul0xd[temp[2]] ^ mul0x9[temp[3]]) << 24) |\
+               ((mul0x9[temp[0]] ^ mul0xe[temp[1]] ^ mul0xb[temp[2]] ^ mul0xd[temp[3]]) << 16) |\
+               ((mul0xd[temp[0]] ^ mul0x9[temp[1]] ^ mul0xe[temp[2]] ^ mul0xb[temp[3]]) << 8)  |\
+               (mul0xb[temp[0]] ^ mul0xd[temp[1]] ^ mul0x9[temp[2]] ^ mul0xe[temp[3]]);
 
 
 #define MAES_inv_sub_words_m(state) \

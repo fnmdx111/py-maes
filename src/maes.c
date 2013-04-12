@@ -8,16 +8,44 @@ static PyObject* InvalidKeyLength;
 
 #define MAES_aes_m(state) \
     MAES_init_round_m(state)\
-    for (i = 1; i < n_round; ++i) {\
-        MAES_round_m(state, i)\
-    }\
+        MAES_round_m(state, 1)\
+        MAES_round_m(state, 2)\
+        MAES_round_m(state, 3)\
+        MAES_round_m(state, 4)\
+        MAES_round_m(state, 5)\
+        MAES_round_m(state, 6)\
+        MAES_round_m(state, 7)\
+        MAES_round_m(state, 8)\
+        MAES_round_m(state, 9)\
+        if (n_round > 10) {\
+            MAES_round_m(state, 10)\
+            MAES_round_m(state, 11)\
+        }\
+        if (n_round > 12) {\
+            MAES_round_m(state, 12)\
+            MAES_round_m(state, 13)\
+        }\
     MAES_final_round_m(state)
 
 #define MAES_inv_aes_m(state) \
     MAES_inv_init_round_m(state)\
-    for (i = n_round - 1; i > 0; --i) {\
-        MAES_inv_round_m(state, i)\
-    }\
+        if (n_round > 12) {\
+            MAES_inv_round_m(state, 13)\
+            MAES_inv_round_m(state, 12)\
+        }\
+        if (n_round > 10) {\
+            MAES_inv_round_m(state, 11)\
+            MAES_inv_round_m(state, 10)\
+        }\
+        MAES_inv_round_m(state, 9)\
+        MAES_inv_round_m(state, 8)\
+        MAES_inv_round_m(state, 7)\
+        MAES_inv_round_m(state, 6)\
+        MAES_inv_round_m(state, 5)\
+        MAES_inv_round_m(state, 4)\
+        MAES_inv_round_m(state, 3)\
+        MAES_inv_round_m(state, 2)\
+        MAES_inv_round_m(state, 1)\
     MAES_inv_final_round_m(state)
 
 #define VALIDATE_LEN_2(param) \
@@ -39,10 +67,11 @@ static PyObject* InvalidKeyLength;
         return NULL;\
     }
 
-#define INIT_VARS int ok, i; uint temp[4], state[4], key_raw[8];
+#define INIT_VARS int ok; uint temp[4], state[4], key_raw[8];
 #define INIT_DATA_VARS(keyword)\
     int keyword ## _size, key_size = 0;\
-    char *keyword, *key = NULL;
+    char *keyword, *key = NULL;\
+    uchar *uchar_ ## keyword;
 
 #define PREPARE_KEYS \
 	if (key_size) {\
@@ -88,11 +117,12 @@ MAES_encrypt(PyObject* self,
     VALIDATE_LEN_2(plaintext)
     PREPARE_KEYS
 
-    MAES_char_arr_to_uint_arr_m(state, plaintext, plaintext_size, 0)
+    uchar_plaintext = (uchar*) plaintext;
+    MAES_uchar_16_to_uint_4_m(state, uchar_plaintext, 0)
 
     MAES_aes_m(state)
 
-    MAES_uint_arr_to_uchar_arr_m(cipher, state, 4, 0) 
+    MAES_uint_4_to_uchar_16_m(cipher, state, 0) 
 
 	return Py_BuildValue("s#",
                          cipher,
@@ -110,8 +140,7 @@ MAES_cbc_aes(PyObject* self,
     INIT_DATA_VARS(plaintext)
 
     char* init_vec;
-    int   init_vec_size, enc_times, offset_from, offset_to;
-    uchar* plt;
+    int   init_vec_size, enc_times, offset_from, offset_to, i;
 
     ok = PyArg_ParseTuple(args,
                           "s#s#|s#",
@@ -128,9 +157,9 @@ MAES_cbc_aes(PyObject* self,
 
     enc_times = plaintext_size / 16;
     // XXX debug here
-    plt = (uchar*) plaintext;
+    uchar_plaintext = (uchar*) plaintext;
     for (i = offset_from = offset_to = 0; i < enc_times; ++i) {
-        MAES_uchar_16_to_uint_4_m(state, plt, offset_from)
+        MAES_uchar_16_to_uint_4_auto_m(state, uchar_plaintext, offset_from)
 
         // Mi (+) I -> State
         MAES_add_round_keys_m(state, init_vec, 0);
@@ -138,7 +167,7 @@ MAES_cbc_aes(PyObject* self,
         // State -> Ci
         MAES_aes_m(state)
         // Ci -> Output
-        MAES_uint_4_to_uchar_16_m(buf_uchar, state, offset_to)
+        MAES_uint_4_to_uchar_16_auto_m(buf_uchar, state, offset_to)
 
         // Ci -> I
         init_vec[0] = state[0]; init_vec[1] = state[1];
@@ -159,6 +188,7 @@ MAES_decrypt(PyObject* self,
     INIT_DATA_VARS(cipher)
 
     uchar plaintext[16];
+
     ok = PyArg_ParseTuple(args,
                           "s#|s#",
                           &cipher, &cipher_size,
@@ -166,11 +196,12 @@ MAES_decrypt(PyObject* self,
     VALIDATE_LEN_2(cipher)
     PREPARE_KEYS
 
-    MAES_char_arr_to_uint_arr_m(state, cipher, cipher_size, 0)
+    uchar_cipher = (uchar*) cipher;
+    MAES_uchar_16_to_uint_4_m(state, uchar_cipher, 0)
 
     MAES_inv_aes_m(state)
 
-    MAES_uint_arr_to_uchar_arr_m(plaintext, state, 4, 0)
+    MAES_uint_4_to_uchar_16_m(plaintext, state, 0)
 
 	return Py_BuildValue("s#",
                          plaintext,

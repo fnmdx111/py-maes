@@ -23,18 +23,18 @@ typedef uint32_t uint;
                                 inv_sbox[(x >> 8) & 0xff] << 8 | inv_sbox[x & 0xff])
 #define MAES_shift_row_m(w1, w2, w3, w4) ((w1 & 0xff000000) | (w2 & 0x00ff0000) |\
                                           (w3 & 0x0000ff00) | (w4 & 0x000000ff))
-#define MAES_add_round_keys_m(state, keys, start) {\
+#define MAES_add_round_keys_m(state, keys, start) \
 	state[0] ^= keys[start];\
 	state[1] ^= keys[start + 1];\
 	state[2] ^= keys[start + 2];\
-	state[3] ^= keys[start + 3];\
-}
-#define MAES_mix_columns_m(state, f) {\
+	state[3] ^= keys[start + 3];
+
+#define MAES_mix_columns_m(state, f) \
 	f(state, 0)\
 	f(state, 1)\
 	f(state, 2)\
-	f(state, 3)\
-}
+	f(state, 3)
+
 
 #define MAES_char_arr_to_uint_arr_m(dest, src_, size, offset) {\
     int i, j;\
@@ -44,7 +44,7 @@ typedef uint32_t uint;
     }\
 }
 
-#define MAES_uchar_16_to_uint_4_m(dest, src, offset) \
+#define MAES_uchar_16_to_uint_4_auto_m(dest, src, offset) \
     dest[0] = src[offset] << 24 | src[offset + 1] << 16 | src[offset + 2] << 8 | src[offset + 3];\
     offset += 4;\
     dest[1] = src[offset] << 24 | src[offset + 1] << 16 | src[offset + 2] << 8 | src[offset + 3];\
@@ -54,7 +54,7 @@ typedef uint32_t uint;
     dest[3] = src[offset] << 24 | src[offset + 1] << 16 | src[offset + 2] << 8 | src[offset + 3];\
     offset += 4;
 
-#define MAES_uint_4_to_uchar_16_m(dest, src, offset) \
+#define MAES_uint_4_to_uchar_16_auto_m(dest, src, offset) \
     dest[offset] = src[0] >> 24; dest[offset + 1] = (src[0] >> 16) & 0xff; dest[offset + 2] = (src[0] >> 8) & 0xff; dest[offset + 3] = src[0] & 0xff;\
     offset += 4;\
     dest[offset] = src[1] >> 24; dest[offset + 1] = (src[1] >> 16) & 0xff; dest[offset + 2] = (src[1] >> 8) & 0xff; dest[offset + 3] = src[1] & 0xff;\
@@ -64,15 +64,18 @@ typedef uint32_t uint;
     dest[offset] = src[3] >> 24; dest[offset + 1] = (src[3] >> 16) & 0xff; dest[offset + 2] = (src[3] >> 8) & 0xff; dest[offset + 3] = src[3] & 0xff;\
     offset += 4;
 
-#define MAES_uint_arr_to_uchar_arr_m(dest, src, size, offset) {\
-    int i, j;\
-    for (i = offset, j = 0; j < size; i += 4, ++j) {\
-        dest[i] = src[j] >> 24;\
-        dest[i + 1] = (src[j] >> 16) & 0xff;\
-        dest[i + 2] = (src[j] >> 8) & 0xff;\
-        dest[i + 3] = src[j] & 0xff;\
-    }\
-}
+#define MAES_uchar_16_to_uint_4_m(dest, src, offset) \
+    dest[0] = src[offset] << 24 | src[offset + 1] << 16 | src[offset + 2] << 8 | src[offset + 3];\
+    dest[1] = src[offset + 4] << 24 | src[offset + 5] << 16 | src[offset + 6] << 8 | src[offset + 7];\
+    dest[2] = src[offset + 8] << 24 | src[offset + 9] << 16 | src[offset + 10] << 8 | src[offset + 11];\
+    dest[3] = src[offset + 12] << 24 | src[offset + 13] << 16 | src[offset + 14] << 8 | src[offset + 15];\
+
+#define MAES_uint_4_to_uchar_16_m(dest, src, offset) \
+    dest[offset] = src[0] >> 24; dest[offset + 1] = (src[0] >> 16) & 0xff; dest[offset + 2] = (src[0] >> 8) & 0xff; dest[offset + 3] = src[0] & 0xff;\
+    dest[offset + 4] = src[1] >> 24; dest[offset + 5] = (src[1] >> 16) & 0xff; dest[offset + 6] = (src[1] >> 8) & 0xff; dest[offset + 7] = src[1] & 0xff;\
+    dest[offset + 8] = src[2] >> 24; dest[offset + 9] = (src[2] >> 16) & 0xff; dest[offset + 10] = (src[2] >> 8) & 0xff; dest[offset + 11] = src[2] & 0xff;\
+    dest[offset + 12] = src[3] >> 24; dest[offset + 13] = (src[3] >> 16) & 0xff; dest[offset + 14] = (src[3] >> 8) & 0xff; dest[offset + 15] = src[3] & 0xff;\
+
 
 extern int n_round;
 extern int n_block;
