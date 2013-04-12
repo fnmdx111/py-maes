@@ -28,9 +28,6 @@ MAES_key_schedule(uint key[])
         }
         t_keys[i] = t_keys[i - n_key] ^ temp;
     }
-    for (i = 0; i < n_block * (n_round + 1); ++i) {
-        printf("%08x\n", t_keys[i]);
-    }
 
     for (i = 0; i < n_block * (n_round + 1); ++i) {
         round_keys[i * 4] = t_keys[i] >> 24;
