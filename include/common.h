@@ -16,24 +16,18 @@
 typedef unsigned char uchar;
 typedef uint32_t uint;
 
-#define MAES_rotate_left_m(x) (x << 8 | x >> 24)
-#define MAES_sub_word_m(x) (sbox[x >> 24] << 24        | sbox[(x >> 16) & 0xff] << 16 |\
-                            sbox[(x >> 8) & 0xff] << 8 | sbox[x & 0xff])
-#define MAES_inv_sub_word_m(x) (inv_sbox[x >> 24] << 24        | inv_sbox[(x >> 16) & 0xff] << 16 |\
-                                inv_sbox[(x >> 8) & 0xff] << 8 | inv_sbox[x & 0xff])
-#define MAES_shift_row_m(w1, w2, w3, w4) ((w1 & 0xff000000) | (w2 & 0x00ff0000) |\
-                                          (w3 & 0x0000ff00) | (w4 & 0x000000ff))
+
 #define MAES_add_round_keys_m(state, keys, start) \
-	state[0] ^= keys[start];\
-	state[1] ^= keys[start + 1];\
-	state[2] ^= keys[start + 2];\
-	state[3] ^= keys[start + 3];
+    state[0x0] ^= keys[start], state[0x1] ^= keys[start + 1], state[0x2] ^= keys[start + 2], state[0x3] ^= keys[start + 3];\
+    state[0x4] ^= keys[start + 4], state[0x5] ^= keys[start + 5], state[0x6] ^= keys[start + 6], state[0x7] ^= keys[start + 7];\
+    state[0x8] ^= keys[start + 8], state[0x9] ^= keys[start + 9], state[0xa] ^= keys[start + 10], state[0xb] ^= keys[start + 11];\
+    state[0xc] ^= keys[start + 12], state[0xd] ^= keys[start + 13], state[0xe] ^= keys[start + 14], state[0xf] ^= keys[start + 15];
 
 #define MAES_mix_columns_m(state, f) \
 	f(state, 0)\
-	f(state, 1)\
-	f(state, 2)\
-	f(state, 3)
+	f(state, 4)\
+	f(state, 8)\
+	f(state, 12)
 
 
 #define MAES_char_arr_to_uint_arr_m(dest, src_, size, offset) {\
@@ -76,6 +70,11 @@ typedef uint32_t uint;
     dest[offset + 8] = src[2] >> 24; dest[offset + 9] = (src[2] >> 16) & 0xff; dest[offset + 10] = (src[2] >> 8) & 0xff; dest[offset + 11] = src[2] & 0xff;\
     dest[offset + 12] = src[3] >> 24; dest[offset + 13] = (src[3] >> 16) & 0xff; dest[offset + 14] = (src[3] >> 8) & 0xff; dest[offset + 15] = src[3] & 0xff;\
 
+#define MAES_copy_16_m(dest, src, offset) \
+    dest[0] = src[offset], dest[1] = src[offset + 1], dest[2] = src[offset + 2], dest[3] = src[offset + 3];\
+    dest[4] = src[offset + 4], dest[5] = src[offset + 5], dest[6] = src[offset + 6], dest[7] = src[offset + 7];\
+    dest[8] = src[offset + 8], dest[9] = src[offset + 9], dest[10] = src[offset + 10], dest[11] = src[offset + 11];\
+    dest[12] = src[offset + 12], dest[13] = src[offset + 13], dest[14] = src[offset + 14], dest[15] = src[offset + 15];\
 
 extern int n_round;
 extern int n_block;
@@ -85,3 +84,4 @@ extern uint round_keys[];
 void MAES_key_schedule(uint key[]);
 
 #endif
+
