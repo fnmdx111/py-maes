@@ -67,7 +67,8 @@ static PyObject* InvalidKeyLength;
         return NULL;\
     }
 
-#define INIT_VARS int ok; uint temp[16], state[16], key_raw[8];
+#define INIT_VARS int ok; uint key_raw[8];
+#define INIT_CIPHER uint temp[16], state[16];
 #define INIT_DATA_VARS(keyword)\
     int keyword ## _size, key_size = 0;\
     char *keyword, *key = NULL;\
@@ -108,6 +109,7 @@ MAES_test_mix_columns(PyObject* self, PyObject* args)
                          state[12], state[13], state[14], state[15]);
 }
 
+
 static PyObject*
 MAES_encrypt(PyObject* self,
              PyObject* args)
@@ -117,6 +119,8 @@ MAES_encrypt(PyObject* self,
 
     uchar cipher[16];
 
+    INIT_CIPHER
+
     ok = PyArg_ParseTuple(args,
                           "s#|s#",
                           &plaintext, &plaintext_size,
@@ -125,6 +129,8 @@ MAES_encrypt(PyObject* self,
     PREPARE_KEYS
 
     uchar_plaintext = (uchar*) plaintext;
+
+
     MAES_copy_16_m(state, uchar_plaintext, 0)
 
     MAES_aes_m(state)
@@ -133,6 +139,37 @@ MAES_encrypt(PyObject* self,
 
 	return Py_BuildValue("s#",
                          cipher,
+                         n_block * 4);
+}
+
+static PyObject*
+MAES_decrypt(PyObject* self,
+             PyObject* args)
+{
+    INIT_VARS
+    INIT_DATA_VARS(cipher)
+
+    uchar plaintext[16];
+
+    INIT_CIPHER
+
+    ok = PyArg_ParseTuple(args,
+                          "s#|s#",
+                          &cipher, &cipher_size,
+                          &key,    &key_size);
+    VALIDATE_LEN_2(cipher)
+    PREPARE_KEYS
+
+    uchar_cipher = (uchar*) cipher;
+
+    MAES_copy_16_m(state, uchar_cipher, 0)
+
+    MAES_inv_aes_m(state)
+
+    MAES_copy_16_m(plaintext, state, 0)
+
+	return Py_BuildValue("s#",
+                         plaintext,
                          n_block * 4);
 }
 
@@ -149,6 +186,8 @@ MAES_cbc_aes(PyObject* self,
     char* init_vec;
     int   init_vec_size, enc_times, offset_from, offset_to, i;
 
+    INIT_CIPHER
+
     ok = PyArg_ParseTuple(args,
                           "s#s#|s#",
                           &plaintext, &plaintext_size,
@@ -161,10 +200,10 @@ MAES_cbc_aes(PyObject* self,
     VALIDATE_LEN_2(plaintext)
     PREPARE_KEYS
 
-
     enc_times = plaintext_size / 16;
     // XXX debug here
     uchar_plaintext = (uchar*) plaintext;
+
     for (i = offset_from = offset_to = 0; i < enc_times; ++i) {
         MAES_uchar_16_to_uint_4_auto_m(state, uchar_plaintext, offset_from)
 
@@ -185,34 +224,6 @@ MAES_cbc_aes(PyObject* self,
     return Py_BuildValue("s#",
                          buf_uchar,
                          plaintext_size);
-}
-
-static PyObject*
-MAES_decrypt(PyObject* self,
-             PyObject* args)
-{
-    INIT_VARS
-    INIT_DATA_VARS(cipher)
-
-    uchar plaintext[16];
-
-    ok = PyArg_ParseTuple(args,
-                          "s#|s#",
-                          &cipher, &cipher_size,
-                          &key,    &key_size);
-    VALIDATE_LEN_2(cipher)
-    PREPARE_KEYS
-
-    uchar_cipher = (uchar*) cipher;
-    MAES_copy_16_m(state, uchar_cipher, 0)
-
-    MAES_inv_aes_m(state)
-
-    MAES_copy_16_m(plaintext, state, 0)
-
-	return Py_BuildValue("s#",
-                         plaintext,
-                         n_block * 4);
 }
 
 static PyObject*

@@ -14,7 +14,7 @@
 #endif
 
 typedef unsigned char uchar;
-typedef uint32_t uint;
+typedef unsigned int uint;
 
 
 #define MAES_add_round_keys_m(state, keys, start) \
