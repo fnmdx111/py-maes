@@ -233,14 +233,10 @@ MAES_cbc_aes(PyObject* self,
     if (offset_from < plaintext_size) {
         rest = plaintext_size - offset_from;
         need = 16 - rest;
-        printf("%d %d\n", rest, need);
-        printf("%d %d\n", offset_to, plaintext_size);
 
         for (i = offset_to, j = 0; i < plaintext_size; ++i, ++j) {
             buf_uchar[i] = init_vec[j];
         } // Head(E[n - 1], rest) -> C[n]
-        DEBUG_16(buf_uchar, offset_to)
-        DEBUG_16(init_vec, 0)
 
         for (i = offset_from, j = 0; i < plaintext_size; ++i, ++j) {
             state[j] = uchar_plaintext[i];
@@ -248,16 +244,13 @@ MAES_cbc_aes(PyObject* self,
         for (; j < 16; ++j) {
             state[j] = 0;
         } // P[n] || 0, ..., 0 -> P
-        DEBUG_16(state, 0)
 
         MAES_add_round_keys_m(state, init_vec, 0) // P (+) E[n - 1] -> D[n]
-        DEBUG_16(state, 0)
         MAES_aes_m(state) // E(D[n], K) -> state
         if (offset_to >= 16) {
             offset_to -= 16;
             MAES_copy_16_dest_inc_m(buf_uchar, state, offset_to) // state -> C[n - 1]
         }
-        DEBUG_16(buf_uchar, offset_to)
         MAES_copy_16_m(init_vec, state, 0)
     }
 
@@ -322,17 +315,13 @@ MAES_inv_cbc_aes(PyObject* self,
     if (offset_from < cipher_size) {
         rest = cipher_size - offset_from;
         need = 16 - rest;
-        printf("%d %d\n", rest, need);
-        printf("%d %d\n", offset_to, cipher_size);
 
         if (offset_to >= 16) {
             offset_to -= 16;
             MAES_copy_16_m(state, uchar_cipher, offset_to) // C[n - 1] -> state
             offset_to += 16;
-            DEBUG_16(state, 0)
             MAES_inv_aes_m(state) // D[n] = D(C[n - 1], K) -> state
         }
-        DEBUG_16(state, 0)
 
         for (i = offset_from, j = 0; i < cipher_size; ++i, ++j) {
             cipher_cache[j] = uchar_cipher[i]; // C[n] -> cipher_cache
@@ -342,16 +331,13 @@ MAES_inv_cbc_aes(PyObject* self,
         } // C = C[n] || 0, ..., 0 -> temp
 
         MAES_add_round_keys_m(state, cipher_cache, 0) // X[n] = D[n] ^ C -> state
-        DEBUG_16(state, 0)
         for (i = offset_to, j = 0; i < cipher_size; ++i, ++j) {
             buf_uchar[i] = state[j];
         } // Head(X[n], rest) -> P[n]
-        DEBUG_16(buf_uchar, offset_to)
 
         for (i = offset_from, j = 0; i < cipher_size; ++i, ++j) {
             state[j] = uchar_cipher[i];
         } // E[n - 1] = C[n] || Tail(X[n], need) -> state
-        DEBUG_16(state, 0)
 
         MAES_inv_aes_m(state) // X[n - 1] = D(E[n - 1], K) -> state
 
@@ -361,7 +347,6 @@ MAES_inv_cbc_aes(PyObject* self,
             offset_to += 32;
         }
         MAES_add_round_keys_m(state, cipher_cache, 0) // P[n - 1] = X[n - 1] ^ C[n - 2] -> state
-        DEBUG_16(state, 0)
 
         offset_to -= 16;
         MAES_copy_16_dest_inc_m(buf_uchar, state, offset_to)

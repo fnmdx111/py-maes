@@ -25,7 +25,7 @@ def padding(size):
     return chr(pad_size) * (pad_size if pad_size else 16)
 
 
-def encrypt_fp(secret_key, plaintext_fp, cipher_fp):
+def encrypt_fp(secret_key, plaintext_fp, cipher_fp, init_vec=''):
     encrypt('\x00' * 16, secret_key)
 
     while True:
@@ -41,7 +41,7 @@ def encrypt_fp(secret_key, plaintext_fp, cipher_fp):
     return cipher_fp
 
 
-def decrypt_fp(secret_key, cipher_fp, plaintext_fp):
+def decrypt_fp(secret_key, cipher_fp, plaintext_fp, init_vec=''):
     encrypt('\x00' * 16, secret_key)
 
     length = len_fp(cipher_fp)
