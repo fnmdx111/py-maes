@@ -1,13 +1,13 @@
 import cProfile
 import pstats
 from enc_prof_bootstrap import key
-from main import decrypt_fp
+from cbc_main import decrypt_fp
 
 
 def test_():
     return decrypt_fp(key,
-                      open('d:/tddownload/QQ2013Beta1.exe.aes', 'rb'),
-                      open('d:/tddownload/QQ2013Beta1.1.exe', 'wb'))
+                      open('d:/tddownload/World-of-Warcraft-Setup-zhCN.exe.aes', 'rb'),
+                      open('d:/tddownload/World-of-Warcraft-Setup-zhCN.1.exe', 'wb'))
 
 
 

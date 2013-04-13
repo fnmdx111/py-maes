@@ -1,2 +1,4 @@
 build/temp.*/*
 *.pyc
+*.out
+a.c

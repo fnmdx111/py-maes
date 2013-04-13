@@ -1,6 +1,6 @@
 import cProfile
 import pstats
-from main import encrypt_fp
+from cbc_main import encrypt_fp
 
 
 key = '\x01\x23\x34\x56\x78\x9a\xbc\xde' * 2
@@ -8,8 +8,8 @@ key = '\x01\x23\x34\x56\x78\x9a\xbc\xde' * 2
 
 def test():
     return encrypt_fp(key,
-                      open('d:/tddownload/QQ2013Beta1.exe', 'rb'),
-                      open('d:/tddownload/QQ2013Beta1.exe.aes', 'wb'))
+                      open('d:/tddownload/World-of-Warcraft-Setup-zhCN.exe', 'rb'),
+                      open('d:/tddownload/World-of-Warcraft-Setup-zhCN.exe.aes', 'wb'))
 
 
 if __name__ == '__main__':

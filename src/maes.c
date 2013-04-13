@@ -48,14 +48,18 @@ static PyObject* InvalidKeyLength;
         MAES_inv_round_m(state, 1)\
     MAES_inv_final_round_m(state)
 
-#define VALIDATE_LEN_2(param) \
+#define VALIDATE_ARGS \
 	if (!ok) {\
 		return NULL;\
-	}\
+	}
+
+#define VALIDATE_INPUT_SIZE(param) \
     if (param ## _size % 16 != 0) {\
         PyErr_SetString(InvalidInputLength, "Invalid " #param " length");\
         return NULL;\
     }\
+
+#define VALIDATE_KEY_SIZE \
     if (key_size == 0) {\
         if (!n_key) {\
             PyErr_SetString(InvalidKeyLength, "No round keys are cached");\
@@ -125,7 +129,9 @@ MAES_encrypt(PyObject* self,
                           "s#|s#",
                           &plaintext, &plaintext_size,
                           &key,       &key_size);
-    VALIDATE_LEN_2(plaintext)
+    VALIDATE_ARGS
+    VALIDATE_INPUT_SIZE(plaintext)
+    VALIDATE_KEY_SIZE
     PREPARE_KEYS
 
     uchar_plaintext = (uchar*) plaintext;
@@ -157,7 +163,9 @@ MAES_decrypt(PyObject* self,
                           "s#|s#",
                           &cipher, &cipher_size,
                           &key,    &key_size);
-    VALIDATE_LEN_2(cipher)
+    VALIDATE_ARGS
+    VALIDATE_INPUT_SIZE(cipher)
+    VALIDATE_KEY_SIZE
     PREPARE_KEYS
 
     uchar_cipher = (uchar*) cipher;
@@ -183,47 +191,188 @@ MAES_cbc_aes(PyObject* self,
     INIT_VARS
     INIT_DATA_VARS(plaintext)
 
-    char* init_vec;
-    int   init_vec_size, enc_times, offset_from, offset_to, i;
+    char* init_vec_cstr;
+    int   init_vec_size, enc_times, offset_from, offset_to,
+          i, rest, need, j;
+    uchar* init_vec_uchar;
+    uint  init_vec[16];
 
     INIT_CIPHER
 
     ok = PyArg_ParseTuple(args,
                           "s#s#|s#",
-                          &plaintext, &plaintext_size,
-                          &init_vec,  &init_vec_size,
-                          &key,       &key_size);
+                          &plaintext,     &plaintext_size,
+                          &init_vec_cstr, &init_vec_size,
+                          &key,           &key_size);
     if (init_vec_size != 16) {
         PyErr_SetString(InvalidInputLength, "Invalid initial vector length");
         return NULL;
+    } else {
+        init_vec_uchar = (uchar*) init_vec_cstr;
+        MAES_copy_16_m(init_vec, init_vec_uchar, 0)
     }
-    VALIDATE_LEN_2(plaintext)
+    VALIDATE_ARGS
+    VALIDATE_KEY_SIZE
     PREPARE_KEYS
 
     enc_times = plaintext_size / 16;
-    // XXX debug here
     uchar_plaintext = (uchar*) plaintext;
 
     for (i = offset_from = offset_to = 0; i < enc_times; ++i) {
-        MAES_uchar_16_to_uint_4_auto_m(state, uchar_plaintext, offset_from)
-
-        // Mi (+) I -> State
-        MAES_add_round_keys_m(state, init_vec, 0);
-
-        // State -> Ci
+        MAES_copy_16_src_inc_m(state, uchar_plaintext, offset_from)
+        MAES_add_round_keys_m(state, init_vec, 0)
         MAES_aes_m(state)
-        // Ci -> Output
-        MAES_uint_4_to_uchar_16_auto_m(buf_uchar, state, offset_to)
-
-        // Ci -> I
-        init_vec[0] = state[0]; init_vec[1] = state[1];
-        init_vec[2] = state[2]; init_vec[3] = state[3];
+        MAES_copy_16_dest_inc_m(buf_uchar, state, offset_to)
+        MAES_copy_16_m(init_vec, state, 0) // E[n - 1] -> init_vec
     }
-    // TODO implement cipher diversion
 
-    return Py_BuildValue("s#",
+    if (offset_from != offset_to) {
+        return NULL;
+    }
+
+    if (offset_from < plaintext_size) {
+        rest = plaintext_size - offset_from;
+        need = 16 - rest;
+        printf("%d %d\n", rest, need);
+        printf("%d %d\n", offset_to, plaintext_size);
+
+        for (i = offset_to, j = 0; i < plaintext_size; ++i, ++j) {
+            buf_uchar[i] = init_vec[j];
+        } // Head(E[n - 1], rest) -> C[n]
+        DEBUG_16(buf_uchar, offset_to)
+        DEBUG_16(init_vec, 0)
+
+        for (i = offset_from, j = 0; i < plaintext_size; ++i, ++j) {
+            state[j] = uchar_plaintext[i];
+        }
+        for (; j < 16; ++j) {
+            state[j] = 0;
+        } // P[n] || 0, ..., 0 -> P
+        DEBUG_16(state, 0)
+
+        MAES_add_round_keys_m(state, init_vec, 0) // P (+) E[n - 1] -> D[n]
+        DEBUG_16(state, 0)
+        MAES_aes_m(state) // E(D[n], K) -> state
+        if (offset_to >= 16) {
+            offset_to -= 16;
+            MAES_copy_16_dest_inc_m(buf_uchar, state, offset_to) // state -> C[n - 1]
+        }
+        DEBUG_16(buf_uchar, offset_to)
+        MAES_copy_16_m(init_vec, state, 0)
+    }
+
+    return Py_BuildValue("s#s#i",
                          buf_uchar,
-                         plaintext_size);
+                         plaintext_size,
+                         init_vec,
+                         16,
+                         plaintext_size <= 16 ? 1 : 0);
+}
+
+static PyObject*
+MAES_inv_cbc_aes(PyObject* self,
+             PyObject* args)
+/*
+ * each time pass in 8192 * 128
+ */
+{
+    INIT_VARS
+    INIT_DATA_VARS(cipher)
+
+    char* init_vec_cstr;
+    int   init_vec_size, dec_times, offset_from, offset_to,
+          i, rest, need, j;
+    uchar* init_vec_uchar;
+    uint  init_vec[16], cipher_cache[16];
+
+    INIT_CIPHER
+
+    ok = PyArg_ParseTuple(args,
+                          "s#s#|s#",
+                          &cipher,        &cipher_size,
+                          &init_vec_cstr, &init_vec_size,
+                          &key,           &key_size);
+    if (init_vec_size != 16) {
+        PyErr_SetString(InvalidInputLength, "Invalid initial vector length");
+        return NULL;
+    } else {
+        init_vec_uchar = (uchar*) init_vec_cstr;
+        MAES_copy_16_m(init_vec, init_vec_uchar, 0)
+    }
+    VALIDATE_ARGS
+    VALIDATE_KEY_SIZE
+    PREPARE_KEYS
+
+    dec_times = cipher_size / 16;
+    uchar_cipher = (uchar*) cipher;
+
+    for (i = offset_from = offset_to = 0; i < dec_times; ++i) {
+        MAES_copy_16_src_inc_m(state, uchar_cipher, offset_from) // C[i] -> state
+        MAES_copy_16_m(cipher_cache, state, 0) // D[i] -> cipher_cache
+        MAES_inv_aes_m(state) // D[i] = D(C[i], K) -> state
+        MAES_add_round_keys_m(state, init_vec, 0) // P[i] -> D[i] (+) init_vec -> state
+        MAES_copy_16_dest_inc_m(buf_uchar, state, offset_to)
+        MAES_copy_16_m(init_vec, cipher_cache, 0) // D[i] -> init_vec
+    }
+
+    if (offset_from != offset_to) {
+        return NULL;
+    }
+
+    if (offset_from < cipher_size) {
+        rest = cipher_size - offset_from;
+        need = 16 - rest;
+        printf("%d %d\n", rest, need);
+        printf("%d %d\n", offset_to, cipher_size);
+
+        if (offset_to >= 16) {
+            offset_to -= 16;
+            MAES_copy_16_m(state, uchar_cipher, offset_to) // C[n - 1] -> state
+            offset_to += 16;
+            DEBUG_16(state, 0)
+            MAES_inv_aes_m(state) // D[n] = D(C[n - 1], K) -> state
+        }
+        DEBUG_16(state, 0)
+
+        for (i = offset_from, j = 0; i < cipher_size; ++i, ++j) {
+            cipher_cache[j] = uchar_cipher[i]; // C[n] -> cipher_cache
+        }
+        for (; j < 16; ++j) {
+            cipher_cache[j] = 0;
+        } // C = C[n] || 0, ..., 0 -> temp
+
+        MAES_add_round_keys_m(state, cipher_cache, 0) // X[n] = D[n] ^ C -> state
+        DEBUG_16(state, 0)
+        for (i = offset_to, j = 0; i < cipher_size; ++i, ++j) {
+            buf_uchar[i] = state[j];
+        } // Head(X[n], rest) -> P[n]
+        DEBUG_16(buf_uchar, offset_to)
+
+        for (i = offset_from, j = 0; i < cipher_size; ++i, ++j) {
+            state[j] = uchar_cipher[i];
+        } // E[n - 1] = C[n] || Tail(X[n], need) -> state
+        DEBUG_16(state, 0)
+
+        MAES_inv_aes_m(state) // X[n - 1] = D(E[n - 1], K) -> state
+
+        if (offset_to >= 32) {
+            offset_to -= 32;
+            MAES_copy_16_m(cipher_cache, uchar_cipher, offset_to) // C[n - 2] -> cipher_cache
+            offset_to += 32;
+        }
+        MAES_add_round_keys_m(state, cipher_cache, 0) // P[n - 1] = X[n - 1] ^ C[n - 2] -> state
+        DEBUG_16(state, 0)
+
+        offset_to -= 16;
+        MAES_copy_16_dest_inc_m(buf_uchar, state, offset_to)
+    }
+
+    return Py_BuildValue("s#s#i",
+                         buf_uchar,
+                         cipher_size,
+                         init_vec,
+                         16,
+                         cipher_size <= 16 ? 1 : 0);
 }
 
 static PyObject*
@@ -261,6 +410,10 @@ static PyMethodDef maesMethods[] = {
     {
         "cbc_aes", (PyCFunction) MAES_cbc_aes, METH_VARARGS,
         "run aes on given block of plaintext and key in cbc mode"
+    },
+    {
+        "inv_cbc_aes", (PyCFunction) MAES_inv_cbc_aes, METH_VARARGS,
+        "run inverse aes on given block of plaintext and key in cbc mode"
     },
     {
         "test_mix_columns", (PyCFunction) MAES_test_mix_columns, METH_VARARGS,
