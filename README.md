@@ -54,7 +54,7 @@ TODO
 
 * add documentation into source
 * remove redundant code
-* variable block size
+* variable chunk size
 * there may be bug when filesize mod (8192 * 128) < 16 for the sake of cipher stealing
 
 
