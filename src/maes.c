@@ -86,7 +86,7 @@ static PyObject* InvalidKeyLength;
         MAES_key_schedule(key_raw);\
     }
 
-uchar buf_uchar[8192 * 128];
+uchar buf_uchar[CHUNK_SIZE]; // defined at compile time, see setup.py
 
 static PyObject*
 MAES_test_mix_columns(PyObject* self, PyObject* args)
@@ -126,7 +126,7 @@ MAES_encrypt(PyObject* self,
     INIT_CIPHER
 
     ok = PyArg_ParseTuple(args,
-                          "s#|s#",
+                          "s#:plaintext|s#:key",
                           &plaintext, &plaintext_size,
                           &key,       &key_size);
     VALIDATE_ARGS
@@ -160,7 +160,7 @@ MAES_decrypt(PyObject* self,
     INIT_CIPHER
 
     ok = PyArg_ParseTuple(args,
-                          "s#|s#",
+                          "s#:cipher|s#:key",
                           &cipher, &cipher_size,
                           &key,    &key_size);
     VALIDATE_ARGS
@@ -200,7 +200,7 @@ MAES_cbc_aes(PyObject* self,
     INIT_CIPHER
 
     ok = PyArg_ParseTuple(args,
-                          "s#s#|s#",
+                          "s#:plaintexts#:init_vec|s#:key",
                           &plaintext,     &plaintext_size,
                           &init_vec_cstr, &init_vec_size,
                           &key,           &key_size);
@@ -281,7 +281,7 @@ MAES_inv_cbc_aes(PyObject* self,
     INIT_CIPHER
 
     ok = PyArg_ParseTuple(args,
-                          "s#s#|s#",
+                          "s#:ciphers#:init_vec|s#:key",
                           &cipher,        &cipher_size,
                           &init_vec_cstr, &init_vec_size,
                           &key,           &key_size);
