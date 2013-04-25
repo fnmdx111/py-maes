@@ -1,7 +1,7 @@
 /*
  * About the cipher stealing technique, please see this detailed document
  * ref1: http://csrc.nist.gov/groups/ST/toolkit/BCM/documents/ciphertext%20stealing%20proposal.pdf
- * and
+ * and the wiki entry
  * ref2: http://en.wikipedia.org/wiki/Ciphertext_stealing#CBC_ciphertext_stealing
  */
 
