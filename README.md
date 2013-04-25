@@ -21,6 +21,12 @@ MAES是为Python编写的外挂AES库，在AES中，操作单位是字节，本�
 
 编译后会在`build/lib.win32-2.7`下出现`maes.pyd`文件，复制到你的项目下就可以了。
 
+或者用
+
+    python setup.py install
+
+安装到`site-packages`目录下
+
 
 用法
 ----
@@ -30,8 +36,8 @@ MAES是为Python编写的外挂AES库，在AES中，操作单位是字节，本�
     maes.encrypt(plaintext, key='') => cipher
     maes.decrypt(cipher, key='') => plaintext
     maes.cached_round_keys() => round_keys
-    maes.cbc_aes(plaintext, init_vector, key='') => cipher, last_round_cipher, flag
-    maes.inv_cbc_aes(cipher, init_vector, key='') => plaintext, last_round_cipher, flag
+    maes.cbc_aes(plaintext, init_vector, key='') => cipher, last_round_cipher
+    maes.inv_cbc_aes(cipher, init_vector, key='') => plaintext, last_round_cipher
 
 如果key关键字被留空，则使用缓存起来的`round_keys`，可以避免每次加密都要重新计算轮密钥。
 
@@ -52,10 +58,9 @@ e.g.
 TODO
 ----
 
+* gui for profiler.py
 * add documentation into source
 * remove redundant code
-* variable chunk size
-* there may be bug when filesize mod (8192 * 128) < 16 for the sake of cipher stealing
 
 
 性能
@@ -163,6 +168,8 @@ TODO
 
 Changelog
 ---------
+
+* 2013/4/25 修复了一个潜在的bug，程序现在可以正确加解密大小在(16, 32)区间内的文件了，代价是极小的速度损失
 
 * 2013/4/13 完成了CBC模式的代码
 
