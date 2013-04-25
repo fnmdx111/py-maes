@@ -16,7 +16,7 @@ def encrypt_fp(secret_key, plaintext_fp, cipher_fp, init_vector='\x00' * 16):
         if not rest_size:
             break
 
-        if rest_size >= block_size_and_a_byte:
+        if rest_size > block_size_and_a_byte:
             size = block_size
         else:
             size = rest_size
@@ -39,7 +39,7 @@ def decrypt_fp(secret_key, cipher_fp, plaintext_fp, init_vector='\x00' * 16):
         if not rest_size:
             break
 
-        if rest_size >= block_size_and_a_byte:
+        if rest_size > block_size_and_a_byte:
             size = block_size
         else:
             size = rest_size

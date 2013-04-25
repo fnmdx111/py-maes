@@ -5,8 +5,6 @@ import sys
 import struct
 
 
-key = '01233456789abcde' * 2
-init_vec = '00' * 16
 
 
 parser = argparse.ArgumentParser()
