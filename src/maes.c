@@ -287,12 +287,11 @@ MAES_cbc_aes(PyObject* self,
         }
     }
 
-    return Py_BuildValue("s#s#i",
+    return Py_BuildValue("s#s#",
                          buf_uchar,
                          plaintext_size,
                          init_vec,
-                         16,
-                         plaintext_size <= 16 ? 1 : 0);
+                         16);
 }
 
 static PyObject*
@@ -412,12 +411,11 @@ MAES_inv_cbc_aes(PyObject* self,
         }
     }
 
-    return Py_BuildValue("s#s#i",
+    return Py_BuildValue("s#s#",
                          buf_uchar,
                          cipher_size,
                          init_vec,
-                         16,
-                         cipher_size <= 16 ? 1 : 0);
+                         16);
 }
 
 static PyObject*
