@@ -36,8 +36,8 @@ MAES是为Python编写的外挂AES库，在AES中，操作单位是字节，本�
     maes.encrypt(plaintext, key='') => cipher
     maes.decrypt(cipher, key='') => plaintext
     maes.cached_round_keys() => round_keys
-    maes.cbc_aes(plaintext, init_vector, key='') => cipher, last_round_cipher
-    maes.inv_cbc_aes(cipher, init_vector, key='') => plaintext, last_round_cipher
+    maes.cbc_aes(plaintext, init_vector, key='') => cipher, last_round_iv
+    maes.inv_cbc_aes(cipher, init_vector, key='') => plaintext, last_round_iv
 
 如果key关键字被留空，则使用缓存起来的`round_keys`，可以避免每次加密都要重新计算轮密钥。
 
